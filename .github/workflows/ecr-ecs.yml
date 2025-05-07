@@ -77,7 +77,7 @@ jobs:
       - name: Retrieve current ECS task definition JSON file
         id: retrieve-task-def
         run: |
-          TASK_DEF_NAME="ci_cd_task"
+          TASK_DEF_NAME="test-task-definition"
           aws ecs describe-task-definition --task-definition $TASK_DEF_NAME --query taskDefinition > task-definition.json
           cat task-definition.json
           echo "::set-output name=task_def_file::task-definition.json"
