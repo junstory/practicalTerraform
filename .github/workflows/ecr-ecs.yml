@@ -87,7 +87,7 @@ jobs:
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
           task-definition: ${{ steps.retrieve-task-def.outputs.task_def_file }}
-          container-name: "ci_cd_container"
+          container-name: "sample-container"
           image: ${{ steps.build-image.outputs.image }}
 
       - name: Clean task definition (remove enableFaultInjection)
