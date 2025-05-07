@@ -53,10 +53,17 @@ jobs:
           shortSha=$(git rev-parse --short ${{ github.sha }})
           echo "::set-output name=short_sha::$shortSha"
 
+      - name: Grant execute permission for gradlew
+        run: chmod +x ./book_spring_dev/gradlew
+
+      - name: Build with Gradle
+        run: |
+          cd ./book_spring_dev
+          ./gradlew build
+
       - name: Build, tag, and push Docker image to Amazon ECR
         id: build-image
         env:
-
           ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
           IMAGE_TAG: ${{ steps.vars.outputs.short_sha }}
         run: |
