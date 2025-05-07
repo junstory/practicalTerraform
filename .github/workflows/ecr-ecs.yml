@@ -26,18 +26,18 @@ jobs:
       # 3. application.yml 파일 생성
       - name: Create application.yml
         run: |
-          touch ./kobaco/src/main/resources/application.yml
-          echo "${{ secrets.APPLICATION_PROPERTIES }}" > ./kobaco/src/main/resources/application.yml
+          touch ./book_spring_dev/src/main/resources/application.yml
+          echo "${{ secrets.APPLICATION_PROPERTIES }}" > ./book_spring_dev/src/main/resources/application.yml
 
       # 4. 도커 빌드 환경 설정 (buildx 설치)
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      #
+      #5. AWS 설정
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
@@ -61,7 +61,7 @@ jobs:
           IMAGE_TAG: ${{ steps.vars.outputs.short_sha }}
         run: |
           # 하드코딩된 ECR 저장소 이름: ${{ secrets.AWS_ECR_NAME }}
-          docker build -t $ECR_REGISTRY/${{ secrets.AWS_ECR_NAME }}:$IMAGE_TAG ./kobaco
+          docker build -t $ECR_REGISTRY/${{ secrets.AWS_ECR_NAME }}:$IMAGE_TAG ./book_spring_dev
           docker tag $ECR_REGISTRY/${{ secrets.AWS_ECR_NAME }}:$IMAGE_TAG $ECR_REGISTRY/${{ secrets.AWS_ECR_NAME }}:latest
           docker push $ECR_REGISTRY/${{ secrets.AWS_ECR_NAME }}:$IMAGE_TAG
           docker push $ECR_REGISTRY/${{ secrets.AWS_ECR_NAME }}:latest
@@ -95,5 +95,5 @@ jobs:
         with:
           task-definition: ${{ steps.clean-task-def.outputs.clean_task_def }}
           service: "ec2-ecs-service-test"
-          cluster: "kobaco_cluster"
+          cluster: "test"
           wait-for-service-stability: true
