@@ -1,5 +1,5 @@
 name: Deploy to Amazon ECS
-
+ 
 on:
   push:
     branches: [dev]
@@ -26,8 +26,8 @@ jobs:
       # 3. application.yml 파일 생성
       - name: Create application.yml
         run: |
-          touch ./book_spring_dev/src/main/resources/application.yml
-          echo "${{ secrets.APPLICATION_PROPERTIES }}" > ./book_spring_dev/src/main/resources/application.yml
+          touch ./src/main/resources/application.yml
+          echo "${{ secrets.APPLICATION_PROPERTIES }}" > ./src/main/resources/application.yml
 
       # 4. 도커 빌드 환경 설정 (buildx 설치)
       - name: Set up Docker Buildx
@@ -53,15 +53,21 @@ jobs:
           shortSha=$(git rev-parse --short ${{ github.sha }})
           echo "::set-output name=short_sha::$shortSha"
 
+      - name: Grant execute permission for gradlew
+        run: chmod +x ./gradlew
+
+      - name: Build with Gradle
+        run: |
+          ./gradlew build
+
       - name: Build, tag, and push Docker image to Amazon ECR
         id: build-image
         env:
-
           ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ secrets.AWS_REGION }}.amazonaws.com
           IMAGE_TAG: ${{ steps.vars.outputs.short_sha }}
         run: |
           # 하드코딩된 ECR 저장소 이름: ${{ secrets.AWS_ECR_NAME }}
-          docker build -t $ECR_REGISTRY/${{ secrets.AWS_ECR_NAME }}:$IMAGE_TAG ./book_spring_dev
+          docker build -t $ECR_REGISTRY/${{ secrets.AWS_ECR_NAME }}:$IMAGE_TAG .
           docker tag $ECR_REGISTRY/${{ secrets.AWS_ECR_NAME }}:$IMAGE_TAG $ECR_REGISTRY/${{ secrets.AWS_ECR_NAME }}:latest
           docker push $ECR_REGISTRY/${{ secrets.AWS_ECR_NAME }}:$IMAGE_TAG
           docker push $ECR_REGISTRY/${{ secrets.AWS_ECR_NAME }}:latest
@@ -70,7 +76,7 @@ jobs:
       - name: Retrieve current ECS task definition JSON file
         id: retrieve-task-def
         run: |
-          TASK_DEF_NAME="ci_cd_task"
+          TASK_DEF_NAME="intelliviewTask"
           aws ecs describe-task-definition --task-definition $TASK_DEF_NAME --query taskDefinition > task-definition.json
           cat task-definition.json
           echo "::set-output name=task_def_file::task-definition.json"
@@ -80,7 +86,7 @@ jobs:
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
           task-definition: ${{ steps.retrieve-task-def.outputs.task_def_file }}
-          container-name: "ci_cd_container"
+          container-name: "intelliview-server"
           image: ${{ steps.build-image.outputs.image }}
 
       - name: Clean task definition (remove enableFaultInjection)
@@ -94,6 +100,6 @@ jobs:
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
         with:
           task-definition: ${{ steps.clean-task-def.outputs.clean_task_def }}
-          service: "ec2-ecs-service-test"
-          cluster: "test"
+          service: "intelliviewTask-service"
+          cluster: "intelliview-ecs"
           wait-for-service-stability: true

@@ -61,4 +61,10 @@ public class BlogApiController {
         return ResponseEntity.ok()
                 .body(updatedArticle);
     }
+
+    @GetMapping("/")
+        public ResponseEntity<String> index() {
+                return ResponseEntity.ok()
+                        .body("health check ok");
+        }
 }
